@@ -45,30 +45,41 @@ $mysqli->close();
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <style>
-        table {
-            border-collapse: collapse;
-            width: 100%;
-        }
+    .table-responsive {
+        overflow-x: auto;
+    }
 
-        th,
-        td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: center;
-        }
+    table {
+        border-collapse: collapse;
+        width: 100%;
+    }
 
-        th {
-            background-color: #f8f9fa;
-        }
+    th,
+    td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: center;
+    }
 
-        input[type="text"],
-        input[type="number"] {
-            width: 100%;
-            box-sizing: border-box;
-            resize: horizontal;
-            /* 允許水平調整大小 */
-        }
+    th {
+        background-color: #f8f9fa;
+    }
+
+    input[type="text"],
+    input[type="number"] {
+        width: 100%;
+        box-sizing: border-box;
+        resize: both;
+        /* 允許水平和垂直調整大小 */
+    }
+
+    input.form-control {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
     </style>
+
 </head>
 
 <body>
@@ -109,25 +120,48 @@ $mysqli->close();
                 </thead>
                 <tbody>
                     <tr>
-                        <td><input type="text" class="form-control" name="mask" value="<?php echo htmlspecialchars($data['mask']); ?>"></td>
-                        <td><input type="text" class="form-control" name="chips" value="<?php echo htmlspecialchars($data['chips']); ?>"></td>
-                        <td><input type="number" class="form-control" name="uv_o_zone_min" value="<?php echo htmlspecialchars($data['uv_o_zone_min']); ?>"></td>
-                        <td><input type="number" class="form-control" name="hf_49_min" value="<?php echo htmlspecialchars($data['hf_49_min']); ?>"></td>
-                        <td><input type="text" class="form-control" name="anneal" value="<?php echo htmlspecialchars($data['anneal']); ?>"></td>
-                        <td><input type="number" class="form-control" name="coating_spin_617" value="<?php echo htmlspecialchars($data['coating_spin_617']); ?>"></td>
-                        <td><input type="number" class="form-control" name="coating_spin_6200" value="<?php echo htmlspecialchars($data['coating_spin_6200']); ?>"></td>
-                        <td><input type="number" class="form-control" name="dose_bc_current_1_nA" value="<?php echo htmlspecialchars($data['dose_bc_current_1_nA']); ?>"></td>
-                        <td><input type="number" class="form-control" name="dose_bc_step_size_1_um" value="<?php echo htmlspecialchars($data['dose_bc_step_size_1_um']); ?>"></td>
-                        <td><input type="number" class="form-control" name="dose_bc_time_1_us" value="<?php echo htmlspecialchars($data['dose_bc_time_1_us']); ?>"></td>
-                        <td><input type="number" class="form-control" name="dose_bc_area_dose_1_uC_cm2" value="<?php echo htmlspecialchars($data['dose_bc_area_dose_1_uC_cm2']); ?>"></td>
-                        <td><input type="number" class="form-control" name="development_bc_546_sec" value="<?php echo htmlspecialchars($data['development_bc_546_sec']); ?>"></td>
-                        <td><input type="text" class="form-control" name="development_bc_502_ratio" value="<?php echo htmlspecialchars($data['development_bc_502_ratio']); ?>"></td>
-                        <td><input type="number" class="form-control" name="dose_sc_current_2_nA" value="<?php echo htmlspecialchars($data['dose_sc_current_2_nA']); ?>"></td>
-                        <td><input type="number" class="form-control" name="dose_sc_step_size_2_um" value="<?php echo htmlspecialchars($data['dose_sc_step_size_2_um']); ?>"></td>
-                        <td><input type="number" class="form-control" name="dose_sc_time_2_us" value="<?php echo htmlspecialchars($data['dose_sc_time_2_us']); ?>"></td>
-                        <td><input type="number" class="form-control" name="development_sc_546_sec" value="<?php echo htmlspecialchars($data['development_sc_546_sec']); ?>"></td>
-                        <td><input type="text" class="form-control" name="development_sc_502_ratio" value="<?php echo htmlspecialchars($data['development_sc_502_ratio']); ?>"></td>
-                        <td><input type="text" class="form-control" name="note" value="<?php echo htmlspecialchars($data['note']); ?>"></td>
+                        <td><input type="text" class="form-control" name="mask"
+                                value="<?php echo htmlspecialchars($data['mask'] ?? ''); ?>">
+                        </td>
+                        <td><input type="text" class="form-control" name="chips"
+                                value="<?php echo htmlspecialchars($data['chips'] ?? ''); ?>">
+                        </td>
+                        <td><input type="number" class="form-control" name="uv_o_zone_min"
+                                value="<?php echo htmlspecialchars($data['uv_o_zone_min'] ?? ''); ?>"></td>
+                        <td><input type="number" class="form-control" name="hf_49_min"
+                                value="<?php echo htmlspecialchars($data['hf_49_min'] ?? ''); ?>"></td>
+                        <td><input type="text" class="form-control" name="anneal"
+                                value="<?php echo htmlspecialchars($data['anneal'] ?? ''); ?>"></td>
+                        <td><input type="number" class="form-control" name="coating_spin_617"
+                                value="<?php echo htmlspecialchars($data['coating_spin_617'] ?? ''); ?>"></td>
+                        <td><input type="number" class="form-control" name="coating_spin_6200"
+                                value="<?php echo htmlspecialchars($data['coating_spin_6200'] ?? ''); ?>"></td>
+                        <td><input type="number" class="form-control" name="dose_bc_current_1_nA"
+                                value="<?php echo htmlspecialchars($data['dose_bc_current_1_nA'] ?? ''); ?>"></td>
+                        <td><input type="number" class="form-control" name="dose_bc_step_size_1_um"
+                                value="<?php echo htmlspecialchars($data['dose_bc_step_size_1_um'] ?? ''); ?>"></td>
+                        <td><input type="number" class="form-control" name="dose_bc_time_1_us"
+                                value="<?php echo htmlspecialchars($data['dose_bc_time_1_us'] ?? ''); ?>"></td>
+                        <td><input type="number" class="form-control" name="dose_bc_area_dose_1_uC_cm2"
+                                value="<?php echo htmlspecialchars($data['dose_bc_area_dose_1_uC_cm2'] ?? ''); ?>"></td>
+                        <td><input type="number" class="form-control" name="development_bc_546_sec"
+                                value="<?php echo htmlspecialchars($data['development_bc_546_sec'] ?? ''); ?>"></td>
+                        <td><input type="text" class="form-control" name="development_bc_502_ratio"
+                                value="<?php echo htmlspecialchars($data['development_bc_502_ratio'] ?? ''); ?>"></td>
+                        <td><input type="number" class="form-control" name="dose_sc_current_2_nA"
+                                value="<?php echo htmlspecialchars($data['dose_sc_current_2_nA'] ?? ''); ?>"></td>
+                        <td><input type="number" class="form-control" name="dose_sc_step_size_2_um"
+                                value="<?php echo htmlspecialchars($data['dose_sc_step_size_2_um'] ?? ''); ?>"></td>
+                        <td><input type="number" class="form-control" name="dose_sc_time_2_us"
+                                value="<?php echo htmlspecialchars($data['dose_sc_time_2_us'] ?? ''); ?>"></td>
+                        <td><input type="number" class="form-control" name="development_sc_546_sec"
+                                value="<?php echo htmlspecialchars($data['development_sc_546_sec'] ?? ''); ?>"></td>
+                        <td><input type="text" class="form-control" name="development_sc_502_ratio"
+                                value="<?php echo htmlspecialchars($data['development_sc_502_ratio'] ?? ''); ?>"></td>
+                        <td><input type="text" class="form-control" name="note"
+                                value="<?php echo htmlspecialchars($data['note'] ?? ''); ?>">
+                        </td>
+
                     </tr>
                 </tbody>
             </table>
@@ -136,32 +170,32 @@ $mysqli->close();
     </div>
 
     <script>
-        function getUrlParams() {
-            const params = new URLSearchParams(window.location.search);
-            return {
-                record_id: params.get('id'),
-                record_number: params.get('number'),
-                method: params.get('process')
-            };
-        }
+    function getUrlParams() {
+        const params = new URLSearchParams(window.location.search);
+        return {
+            record_id: params.get('id'),
+            record_number: params.get('number'),
+            method: params.get('process')
+        };
+    }
 
-        function saveData() {
-            const urlParams = getUrlParams();
-            const formData = $('#dataForm').serialize() + '&' + $.param(urlParams);
+    function saveData() {
+        const urlParams = getUrlParams();
+        const formData = $('#dataForm').serialize() + '&' + $.param(urlParams);
 
-            $.ajax({
-                url: 'php/save_data.php',
-                type: 'POST',
-                data: formData,
-                dataType: 'json',
-                success: function(response) {
-                    alert(response.message);
-                },
-                error: function() {
-                    alert('保存失敗');
-                }
-            });
-        }
+        $.ajax({
+            url: 'php/save_data.php',
+            type: 'POST',
+            data: formData,
+            dataType: 'json',
+            success: function(response) {
+                alert(response.message);
+            },
+            error: function() {
+                alert('保存失敗');
+            }
+        });
+    }
     </script>
 
 </html>
