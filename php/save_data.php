@@ -2,59 +2,36 @@
 require_once 'db.php';
 header("Content-Type: application/json");
 
-// 確保資料庫連接初始化
-if (!isset($_SESSION['link'])) {
-    echo json_encode(["status" => "error", "message" => "資料庫連接未初始化"]);
-    exit;
-}
-if ($_SESSION['link']->connect_error) {
-    echo json_encode(["status" => "error", "message" => "資料庫連接錯誤: " . $_SESSION['link']->connect_error]);
-    exit;
-}
-
-$data = json_decode(file_get_contents('php://input'), true);
-
-// 從網址中抓取參數
-$record_id = isset($_GET['id']) ? intval($_GET['id']) : null;
-$record_number = isset($_GET['number']) ? intval($_GET['number']) : null;
-$method = isset($_GET['process']) ? $_GET['process'] : null;
-
-// 驗證數據
-if (!$data || $record_id === null || $record_number === null || empty($method)) {
-    echo json_encode(["status" => "error", "message" => "無效的數據"]);
-    exit;
-}
-
 try {
     $conn = $_SESSION['link'];
 
-    // 將數據轉換為 JSON 格式
-    $jsonData = json_encode($data);
-    if ($jsonData === false) {
-        echo json_encode(["status" => "error", "message" => "JSON 編碼失敗", "error" => json_last_error_msg()]);
-        exit;
+    $record_id = $_POST['record_id'];
+    $record_number = $_POST['record_number'];
+    $method = $_POST['method'];
+
+    // 檢查是否存在相同的記錄
+    $checkQuery = "SELECT * FROM process_data WHERE record_id = ? AND record_number = ? AND method = ?";
+    $stmt = $conn->prepare($checkQuery);
+    $stmt->bind_param("iis", $record_id, $record_number, $method);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows > 0) {
+        // 更新現有記錄
+        $updateQuery = "UPDATE process_data SET mask = ?, chips = ?, uv_o_zone_min = ?, hf_49_min = ?, anneal = ?, coating_spin_617 = ?, coating_spin_6200 = ?, dose_bc_current_1_nA = ?, dose_bc_step_size_1_um = ?, dose_bc_time_1_us = ?, dose_bc_area_dose_1_uC_cm2 = ?, development_bc_546_sec = ?, development_bc_502_ratio = ?, dose_sc_current_2_nA = ?, dose_sc_step_size_2_um = ?, dose_sc_time_2_us = ?, development_sc_546_sec = ?, development_sc_502_ratio = ?, note = ? WHERE record_id = ? AND record_number = ? AND method = ?";
+        $stmt = $conn->prepare($updateQuery);
+        $stmt->bind_param("ssiiisiiiiisiiisissiis", $_POST['mask'], $_POST['chips'], $_POST['uv_o_zone_min'], $_POST['hf_49_min'], $_POST['anneal'], $_POST['coating_spin_617'], $_POST['coating_spin_6200'], $_POST['dose_bc_current_1_nA'], $_POST['dose_bc_step_size_1_um'], $_POST['dose_bc_time_1_us'], $_POST['dose_bc_area_dose_1_uC_cm2'], $_POST['development_bc_546_sec'], $_POST['development_bc_502_ratio'], $_POST['dose_sc_current_2_nA'], $_POST['dose_sc_step_size_2_um'], $_POST['dose_sc_time_2_us'], $_POST['development_sc_546_sec'], $_POST['development_sc_502_ratio'], $_POST['note'], $record_id, $record_number, $method);
+    } else {
+        // 插入新記錄
+        $insertQuery = "INSERT INTO process_data (record_id, record_number, method, mask, chips, uv_o_zone_min, hf_49_min, anneal, coating_spin_617, coating_spin_6200, dose_bc_current_1_nA, dose_bc_step_size_1_um, dose_bc_time_1_us, dose_bc_area_dose_1_uC_cm2, development_bc_546_sec, development_bc_502_ratio, dose_sc_current_2_nA, dose_sc_step_size_2_um, dose_sc_time_2_us, development_sc_546_sec, development_sc_502_ratio, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $stmt = $conn->prepare($insertQuery);
+        $stmt->bind_param("iisssiiisiiiiisiiisiss", $record_id, $record_number, $method, $_POST['mask'], $_POST['chips'], $_POST['uv_o_zone_min'], $_POST['hf_49_min'], $_POST['anneal'], $_POST['coating_spin_617'], $_POST['coating_spin_6200'], $_POST['dose_bc_current_1_nA'], $_POST['dose_bc_step_size_1_um'], $_POST['dose_bc_time_1_us'], $_POST['dose_bc_area_dose_1_uC_cm2'], $_POST['development_bc_546_sec'], $_POST['development_bc_502_ratio'], $_POST['dose_sc_current_2_nA'], $_POST['dose_sc_step_size_2_um'], $_POST['dose_sc_time_2_us'], $_POST['development_sc_546_sec'], $_POST['development_sc_502_ratio'], $_POST['note']);
     }
 
-    // 插入或更新數據
-    $stmt = $conn->prepare("
-        INSERT INTO process_data (record_id, record_number, method, data)
-        VALUES (?, ?, ?, ?)
-        ON DUPLICATE KEY UPDATE
-        data = VALUES(data)
-    ");
-
-    // 綁定參數
-    $stmt->bind_param("iiss", $record_id, $record_number, $method, $jsonData);
-
-    // 執行操作
     if ($stmt->execute()) {
-        if ($stmt->affected_rows > 1) {
-            echo json_encode(["status" => "success", "message" => "數據已更新"]);
-        } else {
-            echo json_encode(["status" => "success", "message" => "數據已新增"]);
-        }
+        echo json_encode(["status" => "success", "message" => "數據已成功保存"]);
     } else {
-        throw new Exception("操作失敗：" . $stmt->error);
+        throw new Exception("保存數據失敗：" . $stmt->error);
     }
 
     $stmt->close();
