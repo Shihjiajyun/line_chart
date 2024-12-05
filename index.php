@@ -21,21 +21,22 @@ $result = $conn->query($sql);
     <div class="container mt-5">
         <div class="row" id="card-container">
             <?php if ($result->num_rows > 0): ?>
-                <?php while ($row = $result->fetch_assoc()): ?>
-                    <div class="col-md-4 mb-4">
-                        <a href="<?php echo htmlspecialchars($row['id']); ?>" class="text-decoration-none">
-                            <div class="card <?php echo htmlspecialchars($row['status']); ?>">
-                                <div class="card-body">
-                                    <h5 class="card-title">Date: <?php echo htmlspecialchars($row['date']); ?></h5>
-                                    <h6 class="card-subtitle mb-2 text-muted">Sub title: <?php echo htmlspecialchars($row['sub_title']); ?></h6>
-                                    <p class="card-text">Die Number: <?php echo htmlspecialchars($row['die_number']); ?></p>
-                                </div>
-                            </div>
-                        </a>
+            <?php while ($row = $result->fetch_assoc()): ?>
+            <div class="col-md-4 mb-4">
+                <a href="number.php?id=<?php echo htmlspecialchars($row['id']); ?>" class="text-decoration-none">
+                    <div class="card <?php echo htmlspecialchars($row['status']); ?>">
+                        <div class="card-body">
+                            <h5 class="card-title">Date: <?php echo htmlspecialchars($row['date']); ?></h5>
+                            <h6 class="card-subtitle mb-2 text-muted">Sub title:
+                                <?php echo htmlspecialchars($row['sub_title']); ?></h6>
+                            <p class="card-text">Die Number: <?php echo htmlspecialchars($row['die_number']); ?></p>
+                        </div>
                     </div>
-                <?php endwhile; ?>
+                </a>
+            </div>
+            <?php endwhile; ?>
             <?php else: ?>
-                <p>目前沒有任何一張卡片</p>
+            <p>目前沒有任何一張卡片</p>
             <?php endif; ?>
         </div>
     </div>
@@ -81,63 +82,63 @@ $result = $conn->query($sql);
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        document.getElementById('add-card-form').addEventListener('submit', function(event) {
-            event.preventDefault();
+    document.getElementById('add-card-form').addEventListener('submit', function(event) {
+        event.preventDefault();
 
-            // 獲取表單資料
-            const date = document.getElementById('card-date').value;
-            const subtitle = document.getElementById('card-subtitle').value;
-            const text = document.getElementById('card-text').value;
+        // 獲取表單資料
+        const date = document.getElementById('card-date').value;
+        const subtitle = document.getElementById('card-subtitle').value;
+        const text = document.getElementById('card-text').value;
 
-            // 判斷卡片類型
-            let cardClass = '';
-            switch (subtitle) {
-                case 'Store':
-                    cardClass = 'status-store';
-                    break;
-                case 'MEASURE':
-                    cardClass = 'status-measure';
-                    break;
-                case 'For NCU':
-                    cardClass = 'status-for-ncu';
-                    break;
-                case 'SEM':
-                    cardClass = 'status-sem';
-                    break;
-                case 'NUCE':
-                    cardClass = 'status-nuce';
-                    break;
-                case 'Pending':
-                    cardClass = 'status-pending';
-                    break;
-            }
+        // 判斷卡片類型
+        let cardClass = '';
+        switch (subtitle) {
+            case 'Store':
+                cardClass = 'status-store';
+                break;
+            case 'MEASURE':
+                cardClass = 'status-measure';
+                break;
+            case 'For NCU':
+                cardClass = 'status-for-ncu';
+                break;
+            case 'SEM':
+                cardClass = 'status-sem';
+                break;
+            case 'NUCE':
+                cardClass = 'status-nuce';
+                break;
+            case 'Pending':
+                cardClass = 'status-pending';
+                break;
+        }
 
-            // 發送資料到後端
-            fetch('php/add_card.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: `date=${encodeURIComponent(date)}&sub_title=${encodeURIComponent(subtitle)}&status=${encodeURIComponent(cardClass)}&text=${encodeURIComponent(text)}`,
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // 清空表單
-                        document.getElementById('add-card-form').reset();
+        // 發送資料到後端
+        fetch('php/add_card.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `date=${encodeURIComponent(date)}&sub_title=${encodeURIComponent(subtitle)}&status=${encodeURIComponent(cardClass)}&text=${encodeURIComponent(text)}`,
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // 清空表單
+                    document.getElementById('add-card-form').reset();
 
-                        // 關閉模態框
-                        const modal = bootstrap.Modal.getInstance(document.getElementById('exampleModal'));
-                        modal.hide();
+                    // 關閉模態框
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('exampleModal'));
+                    modal.hide();
 
-                        // 提示成功訊息
-                        alert('卡片創建成功，請重新整理來顯示卡片');
-                    } else {
-                        alert(data.message);
-                    }
-                })
-                .catch(error => console.error('Error:', error));
-        });
+                    // 提示成功訊息
+                    alert('卡片創建成功，請重新整理來顯示卡片');
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+    });
     </script>
 </body>
 

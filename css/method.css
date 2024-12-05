@@ -1,0 +1,19 @@
+.card {
+    height: 200px;
+    /* 統一卡片高度 */
+    cursor: pointer;
+    /* 鼠標變成手型，表示可點擊 */
+}
+
+.card-body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+.card:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s ease;
+}
