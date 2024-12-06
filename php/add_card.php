@@ -6,18 +6,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $date = $_POST['date'] ?? '';
     $subTitle = $_POST['sub_title'] ?? '';
     $status = $_POST['status'] ?? '';
+    $text = $_POST['text'] ?? '';
     $dieNumber = 1; // 預設為 1
 
     // 驗證資料
-    if (empty($date) || empty($subTitle) || empty($status)) {
+    if (empty($date) || empty($subTitle) || empty($status) ) {
         echo json_encode(['success' => false, 'message' => '資料不完整！']);
         exit;
     }
 
     // 插入資料
-    $sql = "INSERT INTO records (status, date, sub_title, die_number) VALUES (?, ?, ?, ?)";
+    $sql = "INSERT INTO records (status, date, sub_title, die_number, text) VALUES (?, ?, ?, ?, ?)";
     $stmt = mysqli_prepare($conn, $sql);
-    mysqli_stmt_bind_param($stmt, 'sssi', $status, $date, $subTitle, $dieNumber);
+    mysqli_stmt_bind_param($stmt, 'sssis', $status, $date, $subTitle, $dieNumber, $text);
 
     if (mysqli_stmt_execute($stmt)) {
         echo json_encode(['success' => true, 'message' => '資料已新增！']);
