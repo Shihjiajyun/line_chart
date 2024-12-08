@@ -4,12 +4,14 @@ session_start(); // 啟用 Session
 $uploadedData = [];
 $process = '';
 $table_name = '';
+$data_name = ''; // 新增變數，用於存儲數據名稱
 $success = false;
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['csv_file'])) {
     include 'php/db.php'; // 引入資料庫連線
 
     $process = $_POST['process'];
+    $data_name = $_POST['data_name']; // 接收數據名稱
     $file = $_FILES['csv_file']['tmp_name'];
     $uploadedData = [];
     $table_name = '';
@@ -65,6 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['csv_file'])) {
         $_SESSION['process'] = $process;
         $_SESSION['table_name'] = $table_name;
         $_SESSION['headers'] = $headers;
+        $_SESSION['data_name'] = $data_name; // 存儲數據名稱
     } else {
         echo "<script>alert('無法打開檔案。');</script>";
     }
@@ -78,28 +81,31 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_data'])) {
     $uploadedData = $_SESSION['uploadedData'] ?? [];
     $process = $_SESSION['process'] ?? '';
     $headers = $_SESSION['headers'] ?? [];
+    $data_name = $_SESSION['data_name'] ?? '';
 
     // 如果數據缺失，提示錯誤
-    if (empty($table_name) || empty($uploadedData) || empty($process) || empty($headers)) {
-        echo "<script>alert('缺少必要的資料，請重新上傳 CSV 檔案。');</script>";
+    if (empty($table_name) || empty($uploadedData) || empty($process) || empty($headers) || empty($data_name)) {
+        echo "<script>alert('缺少必要的資料，請重新上傳 CSV 檔案並提供數據名稱。');</script>";
         header("Location: " . $_SERVER['PHP_SELF']); // 重定向避免重複提交
         exit;
     }
 
     foreach ($uploadedData as $data) {
         $data[] = $process;
+        $data[] = $data_name; // 添加數據名稱
 
         $placeholders = implode(',', array_fill(0, count($data), '?'));
 
         $columns = $headers;
-        $columns[] = 'method'; // 確保與資料表欄位名稱一致
+        $columns[] = 'method'; // 製程欄位
+        $columns[] = 'table_name'; // 新增數據名稱欄位
 
         $columnsList = '`' . implode('`, `', $columns) . '`';
         $query = "INSERT INTO `$table_name` ($columnsList) VALUES ($placeholders)";
 
         $stmt = $conn->prepare($query);
 
-        $typeString = str_repeat('d', count($data) - 1) . 's';
+        $typeString = str_repeat('d', count($data) - 2) . 'ss'; // 最後兩個為字串
         $stmt->bind_param($typeString, ...$data);
 
         if (!$stmt->execute()) {
@@ -121,18 +127,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_data'])) {
         </script>";
 
         // 清空 Session
-        unset($_SESSION['uploadedData'], $_SESSION['process'], $_SESSION['table_name'], $_SESSION['headers']);
+        unset($_SESSION['uploadedData'], $_SESSION['process'], $_SESSION['table_name'], $_SESSION['headers'], $_SESSION['data_name']);
         exit; // 確保腳本停止執行
     } else {
         echo "<script>alert('數據存入失敗，請檢查輸入或資料庫設置。');</script>";
     }
-    
 }
 ?>
-
-
-
-
 
 <!DOCTYPE html>
 <html lang="zh-Hant">
@@ -159,41 +160,53 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_data'])) {
                 </select>
             </div>
             <div class="mb-3">
+                <label for="data_name" class="form-label">數據名稱:</label>
+                <input type="text" name="data_name" id="data_name" class="form-control" required>
+            </div>
+            <div class="mb-3">
                 <label for="csv_file" class="form-label">上傳 CSV 檔案:</label>
                 <input type="file" name="csv_file" id="csv_file" accept=".csv" class="form-control" required>
             </div>
             <button type="submit" class="btn btn-primary">上傳</button>
         </form>
 
+
         <?php if (!empty($uploadedData)): ?>
-            <h2 class="mt-5">上傳的數據</h2>
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
+        <h2 class="mt-5">上傳的數據</h2>
+        <p><strong>製程:</strong> <?php echo htmlspecialchars($process); ?></p>
+        <p><strong>數據名稱:</strong> <?php echo htmlspecialchars($data_name); ?></p> <!-- 顯示數據名稱 -->
+        <table class="table table-bordered">
+            <thead>
+                <tr>
                     <?php foreach ($headers as $header): ?>
-                        <th><?php echo htmlspecialchars($header); ?></th>
+                            <th><?php echo htmlspecialchars($header); ?></th>
                     <?php endforeach; ?>
+                    <th>Table Name</th> <!-- 新增一列顯示數據名稱 -->
                 </tr>
             </thead>
             <tbody>
                 <?php foreach ($uploadedData as $row): ?>
-                    <tr>
-                        <?php foreach ($row as $value): ?>
-                            <td><?php echo htmlspecialchars($value); ?></td>
-                        <?php endforeach; ?>
-                    </tr>
+                        <tr>
+                    <?php foreach ($row as $value): ?>
+                        <td><?php echo htmlspecialchars($value); ?></td>
+                    <?php endforeach; ?>
+                            <td><?php echo htmlspecialchars($data_name); ?></td> <!-- 顯示數據名稱 -->
+                </tr>
                 <?php endforeach; ?>
             </tbody>
         </table>
-        <p><strong>製程:</strong> <?php echo htmlspecialchars($process); ?></p>
+
         <form method="post">
             <input type="hidden" name="process" value="<?php echo htmlspecialchars($process); ?>">
             <input type="hidden" name="table_name" value="<?php echo htmlspecialchars($table_name); ?>">
+            <input type="hidden" name="data_name" value="<?php echo htmlspecialchars($data_name); ?>">
+            <!-- 新增數據名稱隱藏欄位 -->
             <button type="submit" name="save_data" class="btn btn-success">儲存</button>
         </form>
         <?php endif; ?>
+
     </div>
-    
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
