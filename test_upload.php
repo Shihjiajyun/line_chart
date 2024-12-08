@@ -65,8 +65,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['csv_file'])) {
         $_SESSION['process'] = $process;
         $_SESSION['table_name'] = $table_name;
         $_SESSION['headers'] = $headers;
-
-        echo "<script>alert('CSV 已成功上傳。');</script>";
     } else {
         echo "<script>alert('無法打開檔案。');</script>";
     }
@@ -82,6 +80,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_data'])) {
     $headers = $_SESSION['headers'] ?? [];
 
     // 如果數據缺失，提示錯誤
+    if (empty($table_name) || empty($uploadedData) || empty($process) || empty($headers)) {
+        echo "<script>alert('缺少必要的資料，請重新上傳 CSV 檔案。');</script>";
+        header("Location: " . $_SERVER['PHP_SELF']); // 重定向避免重複提交
+        exit;
+    }
 
     foreach ($uploadedData as $data) {
         $data[] = $process;
@@ -89,7 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_data'])) {
         $placeholders = implode(',', array_fill(0, count($data), '?'));
 
         $columns = $headers;
-        $columns[] = 'method';
+        $columns[] = 'method'; // 確保與資料表欄位名稱一致
 
         $columnsList = '`' . implode('`, `', $columns) . '`';
         $query = "INSERT INTO `$table_name` ($columnsList) VALUES ($placeholders)";
@@ -99,22 +102,35 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_data'])) {
         $typeString = str_repeat('d', count($data) - 1) . 's';
         $stmt->bind_param($typeString, ...$data);
 
-        if ($stmt->execute()) {
-            $success = true;
+        if (!$stmt->execute()) {
+            echo "Error: " . $stmt->error . "<br>";
+            echo "Query: " . $query . "<br>";
+            echo "Data: " . implode(", ", $data) . "<br>";
+            $success = false;
+            break;
         } else {
-            echo "Error: " . $stmt->error;
+            $success = true;
         }
     }
 
     if ($success) {
-        echo "<script>alert('數據已成功存入資料表 $table_name');</script>";
-    } else {
-        echo "<script>alert('數據存入失敗');</script>";
-    }
+        // 使用 JavaScript 彈出 alert 並進行重定向
+        echo "<script>
+            alert('數據已成功存入資料表 $table_name');
+            window.location.href = '" . $_SERVER['PHP_SELF'] . "';
+        </script>";
 
-    unset($_SESSION['uploadedData'], $_SESSION['process'], $_SESSION['table_name'], $_SESSION['headers']);
+        // 清空 Session
+        unset($_SESSION['uploadedData'], $_SESSION['process'], $_SESSION['table_name'], $_SESSION['headers']);
+        exit; // 確保腳本停止執行
+    } else {
+        echo "<script>alert('數據存入失敗，請檢查輸入或資料庫設置。');</script>";
+    }
+    
 }
 ?>
+
+
 
 
 
@@ -154,31 +170,31 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_data'])) {
             <table class="table table-bordered">
                 <thead>
                     <tr>
-                        <?php foreach ($headers as $header): ?>
-                            <th><?php echo htmlspecialchars($header); ?></th>
+                    <?php foreach ($headers as $header): ?>
+                        <th><?php echo htmlspecialchars($header); ?></th>
+                    <?php endforeach; ?>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($uploadedData as $row): ?>
+                    <tr>
+                        <?php foreach ($row as $value): ?>
+                            <td><?php echo htmlspecialchars($value); ?></td>
                         <?php endforeach; ?>
                     </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($uploadedData as $row): ?>
-                        <tr>
-                            <?php foreach ($row as $value): ?>
-                                <td><?php echo htmlspecialchars($value); ?></td>
-                            <?php endforeach; ?>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-            <p><strong>製程:</strong> <?php echo htmlspecialchars($process); ?></p>
-            <form method="post">
-                <input type="hidden" name="process" value="<?php echo htmlspecialchars($process); ?>">
-                <input type="hidden" name="table_name" value="<?php echo htmlspecialchars($table_name); ?>">
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+        <p><strong>製程:</strong> <?php echo htmlspecialchars($process); ?></p>
+        <form method="post">
+            <input type="hidden" name="process" value="<?php echo htmlspecialchars($process); ?>">
+            <input type="hidden" name="table_name" value="<?php echo htmlspecialchars($table_name); ?>">
             <button type="submit" name="save_data" class="btn btn-success">儲存</button>
         </form>
         <?php endif; ?>
-        </div>
-        
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
 </html>
