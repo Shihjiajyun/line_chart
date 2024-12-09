@@ -7,6 +7,7 @@ $dbuser = 'root';
 $dbpw = 'cuPoe5XnrSl2693iA8I704GkyqapYTj1';
 $dbname = 'line_chart';
 
+
 $conn = mysqli_connect($host, $dbuser, $dbpw, $dbname, $port);
 if ($conn) {
   mysqli_query($conn, "SET NAMES utf8");
