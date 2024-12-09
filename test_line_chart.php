@@ -61,6 +61,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selectedItem'])) {
         mysqli_stmt_execute($stmt);
         $result = mysqli_stmt_get_result($stmt);
 
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateNote'])) {
+            // 獲取提交的數據
+            $note = $_POST['note'];
+            $id = $_POST['id'];
+
+            // 驗證並更新資料表
+            if (!empty($id)) {
+                $updateQuery = "UPDATE `$foundTable` SET `note` = ? WHERE `id` = ?";
+                $stmt = mysqli_prepare($conn, $updateQuery);
+                mysqli_stmt_bind_param($stmt, "si", $note, $id);
+                if (mysqli_stmt_execute($stmt)) {
+                    echo '<div class="alert alert-success">筆記已更新！</div>';
+                } else {
+                    echo '<div class="alert alert-danger">更新失敗：' . mysqli_error($conn) . '</div>';
+                }
+            } else {
+                echo '<div class="alert alert-danger">無效的 ID，無法更新。</div>';
+            }
+        }
+
         if ($result && mysqli_num_rows($result) > 0) {
             // 動態生成表格，使用 Bootstrap 樣式
             $tableHtml .= '<table class="table table-bordered table-hover">';
@@ -71,6 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selectedItem'])) {
             foreach ($fields as $field) {
                 $tableHtml .= '<th>' . htmlspecialchars($field->name) . '</th>';
             }
+            $tableHtml .= '<th>操作</th>'; // 添加操作列
             $tableHtml .= '</tr></thead>';
 
             // 初始化欄位標籤（水平軸）
@@ -87,9 +108,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selectedItem'])) {
                 $tableHtml .= '<tr>';
                 $data = [];
                 foreach ($row as $key => $value) {
-                    $tableHtml .= '<td>' . htmlspecialchars($value) . '</td>';
-                    if (strpos($key, 'Q') === 0 || strpos($key, 'C') === 0) {
-                        $data[] = $value;
+                    if ($key === 'note') {
+                        // Note 欄位變為可編輯的 <textarea>
+                        $tableHtml .= '<td>
+                            <textarea class="form-control" name="note" id="note-' . htmlspecialchars($row['id']) . '">' . htmlspecialchars($value) . '</textarea>
+                            <button onclick="updateNote(' . htmlspecialchars($row['id']) . ', \'' . htmlspecialchars($foundTable) . '\')" class="btn btn-sm btn-primary mt-2">保存</button>
+                        </td>';
+                    } else {
+                        $tableHtml .= '<td>' . htmlspecialchars($value) . '</td>';
+                        if (strpos($key, 'Q') === 0 || strpos($key, 'C') === 0) {
+                            $data[] = $value;
+                        }
                     }
                 }
                 $tableHtml .= '</tr>';
@@ -104,6 +133,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selectedItem'])) {
                     'pointRadius' => 5,
                 ];
             }
+
             $tableHtml .= '</tbody>';
             $tableHtml .= '</table>';
         }
@@ -190,6 +220,40 @@ mysqli_close($conn);
             </div>
         </div>
     </div>
+
+    <script>
+        function updateNote(id, table) {
+            // 獲取 note 的內容
+            const note = document.getElementById(`note-${id}`).value;
+
+            // 使用 Fetch 發送 AJAX 請求
+            fetch('php/update_note.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        id: id,
+                        note: note,
+                        table: table,
+                    }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert('筆記已成功更新！');
+                    } else {
+                        alert('更新失敗：' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('錯誤:', error);
+                    alert('發生錯誤，請稍後再試。');
+                });
+        }
+    </script>
+
+
 
     <!-- --- JS 部分：Chart.js 折線圖 --- -->
     <script>
